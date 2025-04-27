@@ -1,0 +1,10 @@
+data/           
+weights/       
+logs/           
+tensorboard/    
+results/        
+__pycache__/    
+*.pyc          
+.vscode/       
+.env          
+reference/

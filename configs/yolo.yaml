@@ -1,0 +1,34 @@
+# general config
+device: auto   # 可选值：auto、cuda、cpu
+experiment: 0
+load: 0
+save: 0
+batch_size: 16
+freq: 50
+train_subset_len: 20000                     
+val_subset_len: 1000                    
+mode: 'train'
+
+# paths
+weights_path: 'weights/'
+anns_train: 'data/coco/annotations/annotations_trainval2017/instances_train2017.json'
+anns_val: 'data/coco/annotations/annotations_trainval2017/instances_val2017.json'
+imgs_train: 'data/coco/images/train2017/'
+imgs_val: 'data/coco/images/val2017/'
+
+# constant values
+mean: [0.485, 0.456, 0.406]
+std: [0.229, 0.224, 0.225]
+
+
+
+# hypoparameters
+lr: 1e-3            # 学习率  
+epochs: 20          # 迭代次数  
+pic_size: 256
+
+# visualization config
+cv_mode: 'video'
+video_path: 'data/video/4.mp4'
+output_path: 'results/video/output_7.mp4'
+weight_path: 'weights/rtst_udnie.pth'
