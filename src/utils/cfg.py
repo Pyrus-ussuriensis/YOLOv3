@@ -28,6 +28,10 @@ transform_pic_o = transforms.Compose([
         ])
 
 
+anchors = [ (10,13),(16,30),(33,23),(30,61),(62,45),(59,119),(116,90),(156,198),(373,326) ]
+cfg['anchors'] = anchors
+
+
 # 根据模式修改部分参数
 mode = cfg['mode']
 if mode == 'test':

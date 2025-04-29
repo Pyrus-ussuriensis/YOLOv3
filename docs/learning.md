@@ -109,3 +109,76 @@ def detection_collate_fn(batch):
 ```
 利用Albumentations实现对图片的裁切缩放，它会自动改相应的标注，它基于Numpy，在CPU上使用。
 ### fiftyone
+### subset
+利用COCO API随机抽取图片ID，然后选出相应图片，标注和类别信息，组成新的标注文件，然后和正常数据一样给CocoDetection，它可以根据标注自动从数据集中选出图片作为子集。
+
+## 模型
+根据论文，网络获取 320 &times; 320 的输入，
+使用逻辑分类器而不是SoftMax，即不是一步步用MLP对应到各个类别，而是直接从之前的输出压缩到类别数。
+从三个尺度预测，最后一个卷积层预测一个三维张量，包含边界框，对象性，类别，具体而言是N*N*(3*(4+1+80)),N*N是代表图片划分的N*N个区域，后面是三个边界框，每个包括四个边界框的定位信息，一个置信度，80个类别。
+前两层提取特征上采样2倍，同时提取较早的特征级联合并，处理，预测。
+从前面所有的计算中预测最终的边界框。
+这是边界框先验：(10×13),(16×30),(33×23),(30×61),(62×45),(59×119),(116×90),(156×198),(373×326)
+这是网络Darknet-53
+![alt text](Darknet-53.png)
+这里提到的256 &times; 256 是用于分类工作。
+
+后续检测头需要再darknet的yolov3.cfg文件中看到，经过处理的结构是这样的，原始文件和处理代码在model中。
+```ini
+Layer 76: convolutional with params {'batch_normalize': '1', 'filters': '512', 'size': '1', 'stride': '1', 'pad': '1', 'activation': 'leaky'}
+Layer 77: convolutional with params {'batch_normalize': '1', 'size': '3', 'stride': '1', 'pad': '1', 'filters': '1024', 'activation': 'leaky'}
+Layer 78: convolutional with params {'batch_normalize': '1', 'filters': '512', 'size': '1', 'stride': '1', 'pad': '1', 'activation': 'leaky'}
+Layer 79: convolutional with params {'batch_normalize': '1', 'size': '3', 'stride': '1', 'pad': '1', 'filters': '1024', 'activation': 'leaky'}
+Layer 80: convolutional with params {'batch_normalize': '1', 'filters': '512', 'size': '1', 'stride': '1', 'pad': '1', 'activation': 'leaky'}
+Layer 81: convolutional with params {'batch_normalize': '1', 'size': '3', 'stride': '1', 'pad': '1', 'filters': '1024', 'activation': 'leaky'}
+Layer 82: convolutional with params {'size': '1', 'stride': '1', 'pad': '1', 'filters': '255', 'activation': 'linear'}
+Layer 83: yolo with params {'mask': '6,7,8', 'anchors': '10,13,  16,30,  33,23,  30,61,  62,45,  59,119,  116,90,  156,198,  373,326', 'classes': '80', 'num': '9', 'jitter': '.3', 'ignore_thresh': '.7', 'truth_thresh': '1', 'random': '1'}
+Layer 84: route with params {'layers': '-4'}
+Layer 85: convolutional with params {'batch_normalize': '1', 'filters': '256', 'size': '1', 'stride': '1', 'pad': '1', 'activation': 'leaky'}
+Layer 86: upsample with params {'stride': '2'}
+Layer 87: route with params {'layers': '-1, 61'}
+Layer 88: convolutional with params {'batch_normalize': '1', 'filters': '256', 'size': '1', 'stride': '1', 'pad': '1', 'activation': 'leaky'}
+Layer 89: convolutional with params {'batch_normalize': '1', 'size': '3', 'stride': '1', 'pad': '1', 'filters': '512', 'activation': 'leaky'}
+Layer 90: convolutional with params {'batch_normalize': '1', 'filters': '256', 'size': '1', 'stride': '1', 'pad': '1', 'activation': 'leaky'}
+Layer 91: convolutional with params {'batch_normalize': '1', 'size': '3', 'stride': '1', 'pad': '1', 'filters': '512', 'activation': 'leaky'}
+Layer 92: convolutional with params {'batch_normalize': '1', 'filters': '256', 'size': '1', 'stride': '1', 'pad': '1', 'activation': 'leaky'}
+Layer 93: convolutional with params {'batch_normalize': '1', 'size': '3', 'stride': '1', 'pad': '1', 'filters': '512', 'activation': 'leaky'}
+Layer 94: convolutional with params {'size': '1', 'stride': '1', 'pad': '1', 'filters': '255', 'activation': 'linear'}
+Layer 95: yolo with params {'mask': '3,4,5', 'anchors': '10,13,  16,30,  33,23,  30,61,  62,45,  59,119,  116,90,  156,198,  373,326', 'classes': '80', 'num': '9', 'jitter': '.3', 'ignore_thresh': '.7', 'truth_thresh': '1', 'random': '1'}
+Layer 96: route with params {'layers': '-4'}
+Layer 97: convolutional with params {'batch_normalize': '1', 'filters': '128', 'size': '1', 'stride': '1', 'pad': '1', 'activation': 'leaky'}
+Layer 98: upsample with params {'stride': '2'}
+Layer 99: route with params {'layers': '-1, 36'}
+Layer 100: convolutional with params {'batch_normalize': '1', 'filters': '128', 'size': '1', 'stride': '1', 'pad': '1', 'activation': 'leaky'}
+Layer 101: convolutional with params {'batch_normalize': '1', 'size': '3', 'stride': '1', 'pad': '1', 'filters': '256', 'activation': 'leaky'}
+Layer 102: convolutional with params {'batch_normalize': '1', 'filters': '128', 'size': '1', 'stride': '1', 'pad': '1', 'activation': 'leaky'}
+Layer 103: convolutional with params {'batch_normalize': '1', 'size': '3', 'stride': '1', 'pad': '1', 'filters': '256', 'activation': 'leaky'}
+Layer 104: convolutional with params {'batch_normalize': '1', 'filters': '128', 'size': '1', 'stride': '1', 'pad': '1', 'activation': 'leaky'}
+Layer 105: convolutional with params {'batch_normalize': '1', 'size': '3', 'stride': '1', 'pad': '1', 'filters': '256', 'activation': 'leaky'}
+Layer 106: convolutional with params {'size': '1', 'stride': '1', 'pad': '1', 'filters': '255', 'activation': 'linear'}
+Layer 107: yolo with params {'mask': '0,1,2', 'anchors': '10,13,  16,30,  33,23,  30,61,  62,45,  59,119,  116,90,  156,198,  373,326', 'classes': '80', 'num': '9', 'jitter': '.3', 'ignore_thresh': '.7', 'truth_thresh': '1', 'random': '1'}
+```
+
+分为
+### 第一分支
+76-81卷积堆叠
+82 给出预测
+83 根据锚框处理预测得到最终预测结果，此处的jitter, random参数用于对图片的处理，具体实现不归model， ignore thresh, truth tresh参数用于训练过程，同样不在此处实现。
+
+### 第二分支
+84 取回82预测
+85 对81输出处理
+86 上采样
+88-93 堆叠
+94-95 预测，YOLO
+
+### 第三分支
+96 取94预测
+97 降通道，上采样
+99 融合
+100-105 堆叠
+106-107 预测， YOLO
+
+
+## 训练
+训练中使用平方误差损失
