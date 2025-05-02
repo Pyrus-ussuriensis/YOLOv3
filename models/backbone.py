@@ -18,9 +18,9 @@ class DarknetResidual(nn.Module):
         y = self.block(x)
         return x + y
 
-class YOLONet(nn.Module):
+class Darknet_53(nn.Module):
     def __init__(self):
-        super(YOLONet, self).__init__()
+        super(Darknet_53, self).__init__()
         self.conv1 = nn.Conv2d(in_channels=3, out_channels=32, kernel_size=3, stride=1, padding=1)
 
         self.conv2 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, stride=2, padding=1)
@@ -64,6 +64,6 @@ class YOLONet(nn.Module):
 
 if __name__ == '__main__':
     input_tensor = torch.randn(1, 3, 256, 256)
-    yolo = YOLONet()
+    yolo = Darknet_53()
     output, t36, t61 = yolo(input_tensor)
     print(output.shape, t36.shape, t61.shape)

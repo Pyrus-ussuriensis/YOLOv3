@@ -1,3 +1,4 @@
+```python
 from pycocotools.coco import COCO
 from PIL import Image
 import torch
@@ -14,7 +15,11 @@ import numpy as np
 from torchvision.datasets.vision import VisionDataset
 import orjson
 
+```
+导入COCO API，图片等
+albumentations用于对图片的处理，它能对标注同步处理，比如缩放切时标注要调整。设置环境变量不然自动检查升级占用时间。
 
+```python
 imgs_train = cfg['imgs_train']
 imgs_val = cfg['imgs_val']
 anns_train = cfg['anns_train']
@@ -33,7 +38,10 @@ cache_train = cfg['cache_train']
 cache_val = cfg['cache_val']
 cache_sub = cfg['cache_sub']
 device = cfg['device']
+```
+获取超参数，主要是标注和缓存，图片的路径
 
+```python
 # 预定义管线，格式为 COCO [x,y,w,h]
 alb_pipeline = A.Compose(
     [
@@ -48,7 +56,10 @@ alb_pipeline = A.Compose(
         min_visibility=0.3     # 剔除过小框
     )
 )
+```
+利用A的函数处理图片和标注
 
+```python
 def transforms_coco(image, target):
     # PIL.Image → NumPy
     image_np = np.array(image)
@@ -71,7 +82,10 @@ def transforms_coco(image, target):
     ]
 
     return image, new_target
+```
+读取后用A转化输出。
 
+```python
 def detection_collate_fn(batch):
     images, targets = zip(*batch)
     images = torch.stack(images, dim=0)
@@ -82,7 +96,10 @@ def detection_collate_fn(batch):
             for t in target
         ]
     return images, targets
+```
+对每个Batch处理，图片整合成一个张量，标注整合成列表，同时每个数据都转化成张量。内容是列表包裹Batchsize个列表，列表内是字典给bbox和category_id。
 
+```python
 def load_coco_cached(ann_path: str, cache_path: str):
     if os.path.exists(cache_path):
         # 直接加载缓存
@@ -101,7 +118,10 @@ def load_coco_cached(ann_path: str, cache_path: str):
         with open(cache_path, 'wb') as f:
             pickle.dump(coco, f, protocol=pickle.HIGHEST_PROTOCOL)
     return coco
+```
+加载COCO数据，如果没有cache则用orjson读取标注，然后写入cache。
 
+```python
 class CachedCocoDetection(VisionDataset):
     def __init__(self, root, annFile, cache_file, transforms=None):
         """
@@ -138,7 +158,10 @@ class CachedCocoDetection(VisionDataset):
 
         return img, anns
 
+```
+数据集类。
 
+```python
 TrainData = CachedCocoDetection(
     root=imgs_train,
     annFile=anns_train,
@@ -159,7 +182,10 @@ SubData = CachedCocoDetection(
     cache_file=cache_sub,
     transforms=transforms_coco
 )
+```
+获取训练，验证，测试集
 
+```python
 # 根据模式确定要加载的数据集
 if mode == 'train':
     TrainData, _ = random_split(TrainData, [train_subset_len, len(TrainData)-train_subset_len])
@@ -173,7 +199,10 @@ elif mode == 'full_train':
 TrainLoader = DataLoader(dataset=TrainData, batch_size = batch_size, collate_fn=detection_collate_fn)
 ValLoader = DataLoader(dataset=ValData, batch_size = batch_size, collate_fn=detection_collate_fn)
 SubLoader = DataLoader(dataset=SubData, batch_size=batch_size, collate_fn=detection_collate_fn)
+```
+根据模式处理，得到数据加载器。
 
+```python
 if __name__ == '__main__':
     for step, batch in enumerate(TrainLoader):
         images, targets = batch
@@ -188,3 +217,5 @@ if __name__ == '__main__':
 
         print(step)
         print(images, targets)
+```
+测试这些环节是否有错误。

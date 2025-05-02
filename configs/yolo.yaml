@@ -17,6 +17,9 @@ anns_val: 'data/coco/annotations/annotations_trainval2017/instances_val2017.json
 anns_sub: 'data/instances_sub20.json'
 imgs_train: 'data/coco/images/train2017/'
 imgs_val: 'data/coco/images/val2017/'
+cache_train: 'data/cache/train.pkl'
+cache_val: 'data/cache/val.pkl'
+cache_sub: 'data/cache/sub.pkl'
 
 # constant values
 mean: [0.485, 0.456, 0.406]
@@ -29,6 +32,10 @@ lr: 1e-3            # 学习率
 epochs: 20          # 迭代次数  
 pic_size: 320
 img_dim: 320
+num_classes: 80
+ignore_thresh: '0.7'
+truth_thresh: '1'
+conf_thresh: '0.5'
 
 # visualization config
 cv_mode: 'video'

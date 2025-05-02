@@ -1,3 +1,4 @@
+```python
 from torchvision import transforms
 from torchvision.utils import save_image
 from src.utils.log import logger
@@ -31,6 +32,12 @@ unnormalize = torchvision.transforms.Normalize(
     std=[1/s for s in std]
 )
 
+```
+获取参数，得到标注类别和实际类别（数字到字符串）的对应字典。**cat_names**
+由于COCO数据集类别不是连续的，空了一些类别数字，建立连续数字和实际列表的对应关系。**cat_id_to_contiguous**
+反归一化处理。
+
+```python
 def save_tensor_box(image, targets, label, outputs, pred_cl, pred_conf, pic_num):
   img_denorm = unnormalize(image)
   img_denorm = img_denorm.clamp(0,1) * 255
@@ -57,3 +64,11 @@ def save_tensor_box(image, targets, label, outputs, pred_cl, pred_conf, pic_num)
   pil_pred = to_pil_image(img_pred)
   pil_gt.save(f"results/pictures/{pic_num}_gt_visualization.png")
   pil_pred.save(f"results/pictures/{pic_num}_pred_visualization.png")
+
+
+```
+首先对图片反归一化。
+然后根据列表一维张量转化成类别列表，包括将浮点数转化为整数，转化为列表，然后将数字转化为实际类别。
+后面预测我们仅显示置信度达到一定数值的，预测张量要获取最大值为预测类别张量，然后转化为整数，用掩码处理，转化为列表，转化为实际类别。
+这是因为画框的函数需要标注的形式是[N,4]张量，类别是字符串列表。但要求的框是四个角的坐标而不是长宽，所以要先转化。
+最后转化为PIL.Image，显示。

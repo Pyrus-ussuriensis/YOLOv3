@@ -130,10 +130,10 @@ class DetectionHead(nn.Module):
 
 
 if __name__ == '__main__':
-    from models.backbone import YOLONet
+    from models.backbone import Darknet_53
     device = cfg['device']
     input_tensor = torch.randn(1, 3, 320, 320).to(device)
-    yolo = YOLONet()
+    yolo = Darknet_53()
     yolo = yolo.to(device=device)
     output, t36, t61 = yolo(input_tensor)
     detect = DetectionHead()

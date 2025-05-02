@@ -1,5 +1,5 @@
 from torch.utils.tensorboard import SummaryWriter
-from utils.cfg import cfg
+from src.utils.cfg import cfg
 experiment = cfg["experiment"]
 
 # 建立Tensorboard的写对象
