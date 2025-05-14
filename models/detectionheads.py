@@ -93,8 +93,8 @@ class Head(nn.Module):
     def forward(self, x):
         y = self.cp(x)
         y1 = y# 保存输出给后面处理
-        y = self.conv1(y)
-        z = self.yolo(y)
+        y = self.conv1(y) # 原始输出
+        z = self.yolo(y) # 经过YOLO处理后输出
         return y1, z
 
 class DetectionHead(nn.Module):

@@ -4,10 +4,22 @@ import torch.nn as nn
 import torch
 from src.utils.cfg import cfg
 
+'''
 class YOLOv3(nn.Module):
     def __init__(self):
         super().__init__()
         self.darknet = Darknet_53()
+        self.dhs = DetectionHead()
+    
+    def forward(self, x):
+        z1, z2, z3 = self.dhs(*(self.darknet(x)))
+        return z1, z2, z3
+'''
+from models.backbone_g.get_backbone import feature_extractor, backbone
+class YOLOv3(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.darknet = backbone
         self.dhs = DetectionHead()
     
     def forward(self, x):

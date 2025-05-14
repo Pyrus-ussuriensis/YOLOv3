@@ -1,25 +1,29 @@
 # general config
 device: auto   # 可选值：auto、cuda、cpu
-experiment: 0
-load: 0
-save: 0
+experiment: 9
+load: 8
+save: 8
 batch_size: 16
-freq: 50
+freq: 10
 train_subset_len: 20000                     
 val_subset_len: 1000                    
-subset_len: 20
-mode: 'train'
+subset_len: 1
+mode: 'full_train'
 
 # paths
 weights_path: 'weights/'
 anns_train: 'data/coco/annotations/annotations_trainval2017/instances_train2017.json'
 anns_val: 'data/coco/annotations/annotations_trainval2017/instances_val2017.json'
-anns_sub: 'data/instances_sub20.json'
+anns_sub: 'data/sub/instances_sub20.json'
 imgs_train: 'data/coco/images/train2017/'
 imgs_val: 'data/coco/images/val2017/'
 cache_train: 'data/cache/train.pkl'
 cache_val: 'data/cache/val.pkl'
 cache_sub: 'data/cache/sub.pkl'
+
+IMAGENET_ROOT: 'data/imagenet'
+imagenet_train: 'data/imagenet/train'
+imagenet_val: 'data/imagenet/val'
 
 # constant values
 mean: [0.485, 0.456, 0.406]
@@ -28,17 +32,22 @@ std: [0.229, 0.224, 0.225]
 
 
 # hypoparameters
-lr: 1e-3            # 学习率  
-epochs: 20          # 迭代次数  
-pic_size: 320
+lr: 1e-4            # 学习率  
+momentum: 0.9          # 动量
+weight_decay: 0.0005  # 权重衰减
+epochs: 600          # 迭代次数  
 img_dim: 320
+pic_size: 320
 num_classes: 80
-ignore_thresh: '0.7'
+ignore_thresh: '0.5'
 truth_thresh: '1'
 conf_thresh: '0.5'
+
+step_size: 30
+gamma: 0.1
 
 # visualization config
 cv_mode: 'video'
 video_path: 'data/video/4.mp4'
 output_path: 'results/video/output_7.mp4'
-weight_path: 'weights/rtst_udnie.pth'
+weight_path: 'weights/YOLOv3_0.pth'

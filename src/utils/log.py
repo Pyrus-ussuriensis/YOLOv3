@@ -21,7 +21,6 @@ logger.info('start training')
 
 
 
-
 # 训练和验证时日志和Tensorboard的统一记录
 def log_info(epoch, loss, mode, place):
     info = f"mode: {mode}\n{place}: {epoch}\nloss: {loss}\n\n"
@@ -33,6 +32,22 @@ def log_info(epoch, loss, mode, place):
     elif mode == "val":
         if place == 'epoch':
             writer.add_scalar('val/loss', loss, epoch)
+    elif mode =='train/box':
+        writer.add_scalar('train/box', loss, epoch)
+    elif mode =='train/obj':
+        writer.add_scalar('train/obj', loss, epoch)
+    elif mode =='train/noobj':
+        writer.add_scalar('train/noobj', loss, epoch)
+    elif mode =='train/cl':
+        writer.add_scalar('train/cl', loss, epoch)
+    elif mode =='val/box':
+        writer.add_scalar('val/box', loss, epoch)
+    elif mode =='val/obj':
+        writer.add_scalar('val/obj', loss, epoch)
+    elif mode =='val/noobj':
+        writer.add_scalar('val/noobj', loss, epoch)
+    elif mode =='val/cl':
+        writer.add_scalar('val/cl', loss, epoch)
     else:
         error_info = "writer mode error!!!"
         #print(error_info)

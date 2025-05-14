@@ -12,14 +12,6 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 cfg['device'] = device
 mean = cfg['mean']
 std = cfg['std']
-pic_size = int(cfg['pic_size'])
-transform_pic_c = transforms.Compose([
-            transforms.Resize(pic_size),
-            transforms.CenterCrop(pic_size),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=mean, std=std)
-
-        ])
 
 transform_pic_o = transforms.Compose([
             transforms.ToTensor(),

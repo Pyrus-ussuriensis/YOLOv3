@@ -165,7 +165,6 @@ if mode == 'train':
     TrainData, _ = random_split(TrainData, [train_subset_len, len(TrainData)-train_subset_len])
     ValData, _ = random_split(ValData, [val_subset_len, len(ValData)-val_subset_len])
 elif mode == 'test':
-    pass
     batch_size = 1
 elif mode == 'full_train':
     pass
