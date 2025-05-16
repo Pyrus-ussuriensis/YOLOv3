@@ -49,14 +49,15 @@ alb_pipeline = A.Compose(
     )
 )
 
-def transforms_coco(image, target):
+def transforms_coco(image, target, img_id):
     # PIL.Image → NumPy
     image_np = np.array(image)
     # 将 bbox 及 labels 列表从 target 取出
+    #image_id = [ann['image_id'] for ann in target] #[ann['image_id'] for ann in target]
     bboxes = [ann['bbox'] for ann in target]
     labels = [ann['category_id'] for ann in target]
     # 执行变换
-    augmented = alb_pipeline(image=image_np, bboxes=bboxes, labels=labels)
+    augmented = alb_pipeline(image=image_np, bboxes=bboxes, labels=labels, )
     # 更新
     image = augmented['image']
 
@@ -65,22 +66,23 @@ def transforms_coco(image, target):
     new_labels = augmented['labels']
 
     # 5. 重建 target 列表，保持与原始格式一致
-    new_target = [
+    new_target = [ {'image_id' : img_id} ] + [
         {'bbox': bbox, 'category_id': label}
         for bbox, label in zip(new_bboxes, new_labels)
     ]
 
     return image, new_target
 
-def detection_collate_fn(batch):
+def detection_collate_fn(batch): # 处理一个batch
     images, targets = zip(*batch)
     images = torch.stack(images, dim=0)
     targets = [*targets]
     for i, target in enumerate(targets):
-        targets[i] = [
-            {'bbox': torch.tensor(t['bbox'], dtype=torch.float32, device=device), 'category_id': torch.tensor(t['category_id'], dtype=torch.float32, device=device)}
-            for t in target
-        ]
+        targets[i] = [{'image_id': torch.tensor(target[0]['image_id'], dtype=torch.float32, device=device)}] + [
+                {'bbox': torch.tensor(t['bbox'], dtype=torch.float32, device=device), 
+                'category_id': torch.tensor(t['category_id'], dtype=torch.float32, device=device)}
+                for t in target[1:]
+            ]
     return images, targets
 
 def load_coco_cached(ann_path: str, cache_path: str):
@@ -134,7 +136,7 @@ class CachedCocoDetection(VisionDataset):
 
         # 3) 调用原有 transforms_coco 处理
         if self.transforms:
-            img, anns = self.transforms(img, anns)
+            img, anns = self.transforms(img, anns, img_id)
 
         return img, anns
 

@@ -8,18 +8,20 @@ freq: 10
 train_subset_len: 20000                     
 val_subset_len: 1000                    
 subset_len: 1
-mode: 'full_train'
+mode: 'train'
 
 # paths
 weights_path: 'weights/'
 anns_train: 'data/coco/annotations/annotations_trainval2017/instances_train2017.json'
 anns_val: 'data/coco/annotations/annotations_trainval2017/instances_val2017.json'
 anns_sub: 'data/sub/instances_sub20.json'
+anns_ap: 'data/coco/annotations/annotations_trainval2017/instances_val2017.json'
 imgs_train: 'data/coco/images/train2017/'
 imgs_val: 'data/coco/images/val2017/'
 cache_train: 'data/cache/train.pkl'
 cache_val: 'data/cache/val.pkl'
 cache_sub: 'data/cache/sub.pkl'
+coco_result: 'results/store/coco_results.json'
 
 IMAGENET_ROOT: 'data/imagenet'
 imagenet_train: 'data/imagenet/train'
@@ -41,7 +43,7 @@ pic_size: 320
 num_classes: 80
 ignore_thresh: '0.5'
 truth_thresh: '1'
-conf_thresh: '0.5'
+conf_thresh: '0.2'
 
 step_size: 30
 gamma: 0.1

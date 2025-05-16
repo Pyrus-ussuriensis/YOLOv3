@@ -20,11 +20,14 @@ weights_path: 'weights/' # 权重路径
 anns_train: 'data/coco/annotations/annotations_trainval2017/instances_train2017.json' # 标注路径
 anns_val: 'data/coco/annotations/annotations_trainval2017/instances_val2017.json'
 anns_sub: 'data/sub/instances_sub20.json'
+anns_ap: 'data/coco/annotations/annotations_trainval2017/instances_val2017.json' # 评估需要的标准标注路径
 imgs_train: 'data/coco/images/train2017/' # 图片路径
 imgs_val: 'data/coco/images/val2017/'
 cache_train: 'data/cache/train.pkl' # 缓存路径
 cache_val: 'data/cache/val.pkl'
 cache_sub: 'data/cache/sub.pkl'
+coco_result: 'results/store/coco_results.json' # 评估AP结果存储路径
+
 
 IMAGENET_ROOT: 'data/imagenet' # imagenet路径
 imagenet_train: 'data/imagenet/train' # COCO数据集路径

@@ -41,6 +41,7 @@ std = cfg['std']
 num_classes = cfg['num_classes']
 ignore_thresh = float(cfg['ignore_thresh'])
 truth_thresh = float(cfg['truth_thresh'])
+conf_thresh = float(cfg['conf_thresh'])
 
 ## optim
 lr = float(cfg['lr'])
@@ -58,8 +59,13 @@ pic_num = 0
 load = int(cfg['load'])
 save = int(cfg['save'])
 
+# ap
+coco_result = cfg['coco_result']
+anns_ap = cfg['anns_ap']
+
 
 def get_targets(targets, device, batch_size):
+    targets = [ann_list[1:] for ann_list in targets]
     all_boxes, all_labels = [], []
     for img_i, ann_list in enumerate(targets):
         tmp_boxes = []
@@ -211,7 +217,7 @@ def train( model: nn.Module, train_loader: DataLoader,
 
 def validate( model: nn.Module, val_loader: DataLoader, 
           optimizer: torch.optim.Optimizer, loss_fn, device: torch.device, 
-          epoch: int, log_fn, freq, batch_size, num_classes, ignore_thresh=0.7, truth_thresh=1,
+          epoch: int, log_fn, freq, batch_size, num_classes, ignore_thresh=0.7, truth_thresh=1, conf_thresh=0.5, 
             p_box=1.0, p_obj=1.0, p_noobj=1, p_class=1.0):
     model = model.to(device)
     model.eval()
@@ -267,6 +273,72 @@ def validate( model: nn.Module, val_loader: DataLoader,
         log_fn(epoch=epoch, loss=L_noobj/len(val_loader), mode='val/noobj', place='epoch')
         log_fn(epoch=epoch, loss=L_cl/len(val_loader), mode='val/cl', place='epoch')
 
+        # === COCO API 评估开始 ===
+        if epoch % freq != 1:
+            return
+        import json
+        from pycocotools.coco import COCO
+        from pycocotools.cocoeval import COCOeval
+
+        # 1. 收集所有预测结果
+        coco_results = []
+        for step, batch in enumerate(tqdm(val_loader)):
+            images, targets = batch
+            # 假设 targets 是 [ [ann,ann,…], […], … ]，ann 中含 image_id
+            image_ids = [ann_list[0]['image_id'] for ann_list in targets]
+            #targets = [ann_list[1:] for ann_list in targets]
+
+            with torch.no_grad():
+                z1, z2, z3 = model(images.to(device))
+            # 同训练时一样，将 z1/z2/z3 合并然后做 NMS
+            # 这里直接复用你 save_tensor_box 中的流程：
+            all_outputs = torch.cat([z[..., :4] for z in (z1,z2,z3)], dim=1)
+            all_confs   = torch.cat([z[..., 4:5] for z in (z1,z2,z3)], dim=1).squeeze(-1)
+            all_cls     = torch.cat([z[..., 5:5+80] for z in (z1,z2,z3)], dim=1)
+
+            for b, image_id in enumerate(image_ids):
+                # 1) 计算最终分数并筛选
+                cls_conf, cls_idx = all_cls[b].max(dim=1)
+                scores = all_confs[b] * cls_conf
+                mask   = scores >= conf_thresh
+                boxes  = box_convert(all_outputs[b][mask], in_fmt='cxcywh', out_fmt='xywh')
+                scores = scores[mask]
+                labels = cls_idx[mask]
+
+                # 2) NMS
+                from torchvision.ops import batched_nms
+                keep = batched_nms(
+                    box_convert(boxes, in_fmt='cxcywh', out_fmt='xywh'),
+                    scores, labels,
+                    iou_threshold=0.45
+                ).tolist()
+                boxes  = boxes[keep]
+                scores = scores[keep]
+                labels = labels[keep]
+
+                # 3) 转为 COCO JSON 条目
+                for (x,y,w,h), s, c in zip(boxes.tolist(), scores.tolist(), labels.tolist()):
+                    coco_results.append({
+                        "image_id": int(image_id),
+                        "category_id": int(c),      # 与 instances_val.json 中一致
+                        "bbox": [x, y, w, h],
+                        "score": float(s)
+                    })
+
+        # 4. 写入文件并调用 COCOeval
+        
+        with open(coco_result, 'w') as f:
+            json.dump(coco_results, f)
+
+        cocoGt  = COCO(anns_ap)          # GT JSON :contentReference[oaicite:0]{index=0}
+        cocoDt  = cocoGt.loadRes(coco_result)              # 预测结果 JSON :contentReference[oaicite:1]{index=1}
+        cocoEval= COCOeval(cocoGt, cocoDt, iouType='bbox')
+        cocoEval.evaluate()
+        cocoEval.accumulate()
+        cocoEval.summarize()  # 打印 AP@[.5:.95]、AP@.5、AP@.75 等指标
+        # === COCO API 评估结束 ===
+    return 
+
 
 if __name__ == '__main__':
     if os.path.isfile(os.path.join('weights/', f'YOLOv3_{load}.pth')):
@@ -274,8 +346,8 @@ if __name__ == '__main__':
     for epoch in range(epochs):
         train(model=model, train_loader=TrainLoader, optimizer=optimizer, loss_fn=loss_fn, device=device, epoch=epoch, log_fn=log_info, freq=freq, save=save,
               num_classes=num_classes, ignore_thresh=ignore_thresh, truth_thresh=truth_thresh, batch_size=batch_size)
-        validate(model=model, val_loader=ValLoader, optimizer=optimizer, loss_fn=loss_fn, device=device, epoch=epoch, log_fn=log_info, freq=freq,
-                   batch_size=batch_size, num_classes=num_classes, ignore_thresh=ignore_thresh, truth_thresh=truth_thresh)
+        validate(model=model, val_loader=SubLoader, optimizer=optimizer, loss_fn=loss_fn, device=device, epoch=epoch, log_fn=log_info, freq=freq,
+                   batch_size=batch_size, num_classes=num_classes, ignore_thresh=ignore_thresh, truth_thresh=truth_thresh, conf_thresh=conf_thresh)
         scheduler.step()
     save_model(model, save, 'yolo')
 
