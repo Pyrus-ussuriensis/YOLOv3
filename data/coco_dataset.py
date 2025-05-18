@@ -61,11 +61,11 @@ def transforms_coco(image, target, img_id):
     # 更新
     image = augmented['image']
 
-    # 4. 从 augmented 中取回变换后的框和标签
+    # 从 augmented 中取回变换后的框和标签
     new_bboxes = augmented['bboxes']
     new_labels = augmented['labels']
 
-    # 5. 重建 target 列表，保持与原始格式一致
+    # 重建 target 列表，保持与原始格式一致
     new_target = [ {'image_id' : img_id} ] + [
         {'bbox': bbox, 'category_id': label}
         for bbox, label in zip(new_bboxes, new_labels)
@@ -125,16 +125,16 @@ class CachedCocoDetection(VisionDataset):
 
     def __getitem__(self, index):
         img_id = self.ids[index]
-        # 1) 读图
+        # 读图
         img_info = self.coco.loadImgs(img_id)[0]
         path = img_info['file_name']
         img  = Image.open(os.path.join(self.root, path)).convert('RGB')
 
-        # 2) 取标注（list of dict）
+        # 取标注（list of dict）
         ann_ids = self.coco.getAnnIds(imgIds=img_id)
         anns    = self.coco.loadAnns(ann_ids)
 
-        # 3) 调用原有 transforms_coco 处理
+        # 调用原有 transforms_coco 处理
         if self.transforms:
             img, anns = self.transforms(img, anns, img_id)
 
