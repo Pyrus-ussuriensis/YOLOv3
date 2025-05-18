@@ -15,16 +15,49 @@ from data.coco_dataset import TrainLoader, ValLoader, SubLoader
 # optim
 from torch.optim import Adam, SGD
 from torch.optim.lr_scheduler import CosineAnnealingLR, ReduceLROnPlateau
-# log
-from src.utils.tensorboard import writer
-from utils.log import log_info
-import logging
 # weights
 from utils.weights import load_model, save_model
 # visualize
 from utils.save import save_tensor_box
 # cal
 from torchvision.ops import box_iou, box_convert
+# CLI
+import argparse, yaml
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="YOLOv3 train")
+
+    parser.add_argument('--experiment', '-e', type=int, help='number of experiment')
+    parser.add_argument("--load", "-l", type=int, help='the num of loading weight files')
+    parser.add_argument("--save", "-s", type=int, help='the num of saving weight files')
+    parser.add_argument("--batchsize", "-b", type=int, default=16, help='batchsize')
+    parser.add_argument("--mode", "-m", type=str, choices=['test', 'train', 'full_train'], default='full_train', help='training mode')
+    parser.add_argument("--lr", type=int, default=1e-3, help='learning rate')
+    parser.add_argument("--momentum", type=int, default=0.9, help='momentum')
+    parser.add_argument("--weight", '-w', type=int, default=0.0005, help='weight decay')
+    parser.add_argument("--epoch", type=int, default=300, help='num of epochs')
+    parser.add_argument("--step", type=int, default=30, help='num of step size')
+    parser.add_argument("--gamma", '-g', type=int, default=0.1, help='gamma')
+    return parser.parse_args()
+
+args = parse_args()
+if args.experiment is not None: cfg['experiment'] = args.experiment 
+if args.load is not None: cfg['load'] = args.load
+if args.save is not None: cfg['save'] = args.save
+if args.batchsize is not None: cfg['batchsize'] = args.batchsize
+if args.mode is not None: cfg['mode'] = args.mode
+if args.lr is not None: cfg['lr'] = args.lr 
+if args.momentum is not None: cfg['momentum'] = args.momentum
+if args.weight is not None: cfg['weight'] = args.weight
+if args.epoch is not None: cfg['epoch'] = args.epoch
+if args.step is not None: cfg['step'] = args.step
+if args.gamma is not None: cfg['gamma'] = args.gamma
+
+# log
+from src.utils.tensorboard import writer
+from utils.log import log_info
+import logging
+
 
 # train settings
 ## model
